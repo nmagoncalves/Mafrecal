@@ -1,0 +1,249 @@
+﻿@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+
+<style>
+    /* Cards principais */
+    .card-stat {
+        transition: transform .15s ease-in-out;
+        border: none;
+        border-radius: 1rem;
+    }
+
+        .card-stat:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-stat .icon {
+            font-size: 2.3rem;
+            opacity: .3;
+        }
+
+    /* Cores corporativas suaves */
+    .bg-primary-soft {
+        background-color: #007bff1a;
+        color: #1f2a38;
+    }
+
+    .bg-success-soft {
+        background-color: #28a7451a;
+        color: #1f2a38;
+    }
+
+    .bg-warning-soft {
+        background-color: #ffc1071a;
+        color: #1f2a38;
+    }
+
+    .bg-danger-soft {
+        background-color: #dc35451a;
+        color: #1f2a38;
+    }
+
+    /* Cards de gráfico */
+    .card-chart {
+        background-color: #ffffff;
+        border: 1px solid #d1d5da;
+        border-radius: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* Tabela de erros */
+    .table-errors tbody tr:hover {
+        background-color: #f5e6e6;
+    }
+
+    .table-danger th {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    /* Botões corporativos */
+    .btn-outline-primary {
+        color: #007bff;
+        border-color: #007bff;
+    }
+
+        .btn-outline-primary:hover {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+
+    .btn-outline-dark {
+        color: #343a40;
+        border-color: #6c757d;
+    }
+
+        .btn-outline-dark:hover {
+            background-color: #6c757d;
+            color: #ffffff;
+        }
+
+    /* Links e títulos */
+    h2, h3 {
+        color: #1f2a38;
+    }
+
+    a {
+        text-decoration: none;
+    }
+</style>
+
+<h2 class="mb-4 fw-bold">
+    <i class="bi bi-speedometer2"></i> Dashboard de Integração
+</h2>
+
+<div class="row g-4">
+    <!-- TOTAL -->
+    <div class="col-md-3">
+        <div class="card card-stat shadow-sm bg-primary-soft">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold">@Model.TotalRegistos</h3>
+                    <p class="m-0">Registos Totais</p>
+                </div>
+                <i class="bi bi-database icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROCESSADOS -->
+    <div class="col-md-3">
+        <div class="card card-stat shadow-sm bg-success-soft">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold">@Model.TotalProcessados</h3>
+                    <p class="m-0">Processados</p>
+                </div>
+                <i class="bi bi-check2-circle icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- PENDENTES -->
+    <div class="col-md-3">
+        <div class="card card-stat shadow-sm bg-warning-soft">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold">@Model.TotalPendentes</h3>
+                    <p class="m-0">Pendentes</p>
+                </div>
+                <i class="bi bi-hourglass-split icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- ERROS -->
+    <div class="col-md-3">
+        <div class="card card-stat shadow-sm bg-danger-soft">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold">@Model.TotalErros</h3>
+                    <p class="m-0">Com Erros</p>
+                </div>
+                <i class="bi bi-exclamation-octagon icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="my-4" />
+
+<h3 class="fw-semibold mt-3">Registos por Endpoint</h3>
+
+<div class="row g-3">
+    @foreach (var ep in Model.TotalPorEndpoint)
+    {
+        var processed = Model.ProcessadosPorEndpoint.ContainsKey(ep.Key) ? Model.ProcessadosPorEndpoint[ep.Key] : 0;
+        var errors = Model.ErrosPorEndpoint.ContainsKey(ep.Key) ? Model.ErrosPorEndpoint[ep.Key] : 0;
+
+        <div class="col-md-4">
+            <div class="card card-chart shadow-sm border-0 rounded-4 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold">@ep.Key</h5>
+                    <i class="bi bi-folder2-open" style="font-size:1.6rem; opacity:0.25;"></i>
+                </div>
+
+                <ul class="list-unstyled mt-2 mb-3">
+                    <li><strong>Total:</strong> @ep.Value</li>
+                    <li><strong>Processados:</strong> @processed</li>
+                    <li><strong class="text-danger">Erros:</strong> @errors</li>
+                </ul>
+
+                <a href="/Transactions?endpoint=@ep.Key" class="btn btn-outline-primary w-100">
+                    Ver Registos
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<hr class="my-4" />
+
+<h3 class="fw-semibold mt-3">Últimos Erros</h3>
+
+<table class="table table-bordered table-sm table-errors rounded-3 shadow-sm">
+    <thead class="table-danger">
+        <tr>
+            <th>ID</th>
+            <th>Endpoint</th>
+            <th>Erro</th>
+            <th>Data</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tx in Model.UltimosErros)
+        {
+            <tr>
+                <td>@tx.SourceEndpointId</td>
+                <td>@tx.SourceEndpoint</td>
+                <td>@tx.Error</td>
+                <td>@tx.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <a href="/Transactions/Details/@tx.Id" class="btn btn-sm btn-outline-dark">
+                        Abrir
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<hr class="my-4" />
+
+<h3 class="fw-semibold">Gráfico (por Endpoint)</h3>
+<div class="card card-chart shadow-sm border-0 rounded-4 p-4">
+    <canvas id="endpointChart" height="120"></canvas>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const labels = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TotalPorEndpoint.Keys));
+        const totals = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TotalPorEndpoint.Values));
+
+        new Chart(document.getElementById('endpointChart'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total de Registos',
+                    data: totals,
+                    backgroundColor: 'rgba(0, 123, 255, 0.5)', // azul corporativo suave
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    </script>
+}

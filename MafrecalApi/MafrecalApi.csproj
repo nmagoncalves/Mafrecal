@@ -1,0 +1,232 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--Project was exported from assembly: D:\DevPessoal\MafrecalApi.dll-->
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{A689792E-F449-4A49-931C-A3B52AD5FB36}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyName>MafrecalApi</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <ApplicationVersion>1.0.0.0</ApplicationVersion>
+    <FileAlignment>512</FileAlignment>
+    <RootNamespace>MafrecalApiV10</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="BasBE100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\BasBE100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="CblBE100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\CblBE100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="CctBE100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\CctBE100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="CmpBE100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\CmpBE100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ErpBE100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\ErpBE100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ErpBS100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\ErpBS100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ErpDS100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\ErpDS100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="IBasBS100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IBasBS100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ICblBS100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\ICblBS100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ICmpBS100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\ICmpBS100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="IIntBS100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IIntBS100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="IInvBS100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IInvBS100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="IntBE100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IntBE100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="InvBE100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\InvBE100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ITesBS100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\ITesBS100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="IVndBS100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\IVndBS100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.6.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NLog, Version=6.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.6.0.7\lib\net46\NLog.dll</HintPath>
+    </Reference>
+    <Reference Include="Primavera.WebAPI.Integration">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\WebApi\bin\Primavera.WebAPI.Integration.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="StdBE100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\StdBE100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http, Version=4.1.1.3, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Net.Http.4.3.4\lib\net46\System.Net.Http.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.6\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.4.3.0\lib\net462\System.Runtime.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.5.3\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Algorithms, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.0\lib\net463\System.Security.Cryptography.Algorithms.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Encoding, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Encoding.4.3.0\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Primitives.4.3.0\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.0\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Web.Http, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.6\lib\net45\System.Web.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http.WebHost, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.6\lib\net45\System.Web.Http.WebHost.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="TesBE100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\TesBE100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="VndBE100">
+      <HintPath>..\..\..\..\..\..\Program Files\PRIMAVERA\SG100\Apl\VndBE100.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="MafrecalApi\ComprasApiController.cs" />
+    <Compile Include="MafrecalApi\InternosApiController.cs" />
+    <Compile Include="MafrecalApi\VendasApiController.cs" />
+    <Compile Include="Models\DocumentoInterno.cs" />
+    <Compile Include="Models\FechoCaixa.cs" />
+    <Compile Include="Models\LinhaInterno.cs" />
+    <Compile Include="PingController.cs" />
+    <Compile Include="Helper.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StringExtensions.cs" />
+    <Compile Include="Models\LinhaCompra.cs" />
+    <Compile Include="Models\DocumentoContaCorrente.cs" />
+    <Compile Include="Models\LinhaContaCorrente.cs" />
+    <Compile Include="Models\Armazem.cs" />
+    <Compile Include="Models\Artigos.cs" />
+    <Compile Include="Models\CondPagamento.cs" />
+    <Compile Include="Models\ContaCaixa.cs" />
+    <Compile Include="Models\DocumentoExterno.cs" />
+    <Compile Include="Models\Entidade.cs" />
+    <Compile Include="Models\ResumoIva.cs" />
+    <Compile Include="Models\ContaBancaria.cs" />
+    <Compile Include="Models\TaxasIva.cs" />
+    <Compile Include="Models\Ausencias.cs" />
+    <Compile Include="Models\Ausencia.cs" />
+    <Compile Include="Models\Banco.cs" />
+    <Compile Include="Models\Compra.cs" />
+    <Compile Include="Models\Credor.cs" />
+    <Compile Include="Models\Enumerator.cs" />
+    <Compile Include="Models\RecursosHumanos.cs" />
+    <Compile Include="Models\Feria.cs" />
+    <Compile Include="Models\FeriasFunc.cs" />
+    <Compile Include="Models\Fornecedor.cs" />
+    <Compile Include="Models\Item.cs" />
+    <Compile Include="Models\DocumentoVenda.cs" />
+    <Compile Include="Models\LinhaVenda.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

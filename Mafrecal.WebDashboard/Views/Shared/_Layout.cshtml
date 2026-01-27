@@ -1,0 +1,158 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Mafrecal Dashboard</title>
+
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Mafrecal.WebDashboard.styles.css" asp-append-version="true" />
+
+    <style>
+        /* Body e fundo geral */
+        body {
+            background-color: #f4f6f8; /* cinza muito claro, elegante */
+            font-family: "Segoe UI", Roboto, Arial, sans-serif;
+            color: #2c3e50; /* texto escuro suave */
+        }
+
+        /* Navbar empresarial */
+        .navbar-modern {
+            background-color: #1f2a38; /* azul escuro corporativo */
+        }
+
+            .navbar-modern .navbar-brand {
+                color: #ffffff;
+                font-weight: 600;
+            }
+
+            .navbar-modern .navbar-nav .nav-link {
+                color: #cfd8dc; /* cinza claro suave */
+                transition: color 0.2s;
+            }
+
+                .navbar-modern .navbar-nav .nav-link:hover {
+                    color: #4fc3f7; /* azul moderno para hover */
+                }
+
+            .navbar-modern .navbar-toggler {
+                border-color: #4fc3f7;
+            }
+
+        /* Cards modernos */
+        .card {
+            background-color: #ffffff;
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* Botões corporativos */
+        .btn-primary {
+            background-color: #007bff; /* azul corporativo */
+            border-color: #007bff;
+            color: #ffffff;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+            .btn-primary:hover {
+                background-color: #0056b3;
+                border-color: #0056b3;
+            }
+
+        .btn-outline-primary {
+            color: #007bff;
+            border-color: #007bff;
+        }
+
+            .btn-outline-primary:hover {
+                background-color: #007bff;
+                color: #ffffff;
+            }
+
+        /* Links discretos */
+        a {
+            text-decoration: none;
+        }
+
+        /* Footer padding */
+        main {
+            padding-top: 1rem;
+            padding-bottom: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar moderna e fixa -->
+    <nav class="navbar navbar-expand-lg navbar-modern shadow-sm sticky-top">
+        <div class="container-fluid">
+
+            <!-- Logo -->
+            <a class="navbar-brand d-flex align-items-center"
+               asp-area="" asp-controller="Dashboard" asp-action="Index">
+                <i class="bi bi-speedometer2 me-2"></i>
+                Mafrecal Dashboard
+            </a>
+
+            <!-- Botão mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Links -->
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center"
+                           asp-controller="Dashboard" asp-action="Index">
+                            <i class="bi bi-graph-up-arrow me-1"></i>
+                            Dashboard
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center"
+                           asp-controller="Transactions" asp-action="Index">
+                            <i class="bi bi-receipt-cutoff me-1"></i>
+                            Transações
+                        </a>
+                    </li>
+ 
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center"
+                           asp-controller="Logs" asp-action="Index">
+                            <i class="bi bi-journal-text me-1"></i>
+                            Logs
+                        </a>
+                    </li>
+
+                </ul>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Conteúdo -->
+    <div class="container py-4">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

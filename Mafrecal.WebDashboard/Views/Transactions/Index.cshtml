@@ -1,0 +1,242 @@
+﻿@model List<TransactionViewModel>
+
+@{
+    Layout = "_Layout";
+}
+
+<h2 class="mb-4 fw-bold">Transactions - @ViewBag.Endpoint</h2>
+
+<div class="mb-3">
+    <label>Source Endpoint:</label>
+    <select id="filterEndpoint" class="form-select soft-select" style="width:auto; display:inline-block;">
+        <option value="">Todos</option>
+        <option value="purchases">Purchases Grouped</option>
+        <option value="purchasesfull">Purchases Full</option>
+        <option value="sales">Sales</option>
+        <option value="stores">Stores</option>
+        <option value="items">Items</option>
+        <option value="clients">Clients</option>
+        <option value="suppliers">Suppliers</option>
+        <option value="interns">Interns</option>
+    </select>
+
+    <label class="ms-3">Processados:</label>
+    <select id="filterProcessed" class="form-select soft-select" style="width:auto; display:inline-block;">
+        <option value="">Todos</option>
+        <option value="true">Sim</option>
+        <option value="false">Não</option>
+    </select>
+
+    <label class="ms-3">Data inicial:</label>
+    <input type="date" id="filterStartDate" class="form-control soft-input" style="width:auto; display:inline-block;" />
+
+    <label class="ms-3">Data final:</label>
+    <input type="date" id="filterEndDate" class="form-control soft-input" style="width:auto; display:inline-block;" />
+</div>
+
+<table id="transactionsTable" class="table table-soft table-striped shadow-sm">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>SourceId</th>
+            <th>SourceEndpoint</th>
+            <th>Processado</th>
+            <th>Erro</th>
+            <th>Criado em</th>
+            <th>Processado em</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tx in Model)
+        {
+            <tr>
+                <td>@tx.Id</td>
+                <td>@tx.SourceEndpointId</td>
+                <td>@tx.SourceEndpoint</td>
+                <td>@tx.Processed</td>
+                <td>@tx.Error</td>
+                <td>@tx.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>@tx.ProcessedAt?.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <a class="btn btn-soft btn-sm" href="/Transactions/Details/@tx.Id">Detalhe</a>
+                    @if (!string.IsNullOrEmpty(tx.ReprocessStatus))
+                    {
+                        @switch (tx.ReprocessStatus)
+                        {
+                            case "Pending":
+                                <span class="badge bg-secondary">Pendente</span>
+                                break;
+
+                            case "Running":
+                                <span class="badge bg-info">Em execução</span>
+                                break;
+
+                            case "Done":
+                                <span class="badge bg-success">Reprocessado</span>
+                                break;
+
+                            case "Error":
+                                <button class="btn btn-danger btn-sm"
+                                        onclick="forceReprocess('@tx.SourceEndpoint','@tx.SourceEndpointId')">
+                                    Forçar
+                                </button>
+                                break;
+                        }
+                    }
+                    else if (!tx.Processed)
+                    {
+                        <button class="btn btn-warning btn-sm"
+                                onclick="forceReprocess('@tx.SourceEndpoint','@tx.SourceEndpointId')">
+                            Forçar Integração
+                        </button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<style>
+    body {
+        background-color: #f4f6f9; /* tom corporativo suave */
+    }
+
+    /* Tabela suave */
+    .table-soft {
+        background-color: #ffffff;
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+        .table-soft thead {
+            background-color: #e1e7f0;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .table-soft tbody tr:nth-child(odd) {
+            background-color: #f7f9fc;
+        }
+
+        .table-soft tbody tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+
+        .table-soft tbody tr:hover {
+            background-color: #d0e2f5;
+        }
+
+    /* Inputs e selects suaves */
+    .soft-input, .soft-select {
+        background-color: #f0f4f8;
+        border: 1px solid #cbd4df;
+        border-radius: 0.5rem;
+        padding: 0.35rem 0.5rem;
+    }
+
+    /* Botões suaves */
+    .btn-soft {
+        background-color: #70b5f9;
+        border-color: #70b5f9;
+        color: #1a1a1a;
+    }
+
+        .btn-soft:hover {
+            background-color: #4d9eea;
+            border-color: #4d9eea;
+            color: #fff;
+        }
+
+    .btn-soft-warning {
+        background-color: #ffeaa0;
+        border-color: #ffeaa0;
+        color: #1a1a1a;
+    }
+
+        .btn-soft-warning:hover {
+            background-color: #ffd65b;
+            border-color: #ffd65b;
+            color: #1a1a1a;
+        }
+</style>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#transactionsTable').DataTable({
+                "order": [[5, "desc"]],
+                "pageLength": 25,
+                "language": {
+                    "decimal": ",",
+                    "thousands": ".",
+                    "processing": "A processar...",
+                    "search": "Pesquisar:",
+                    "lengthMenu": "Mostrar _MENU_ registos",
+                    "info": "Mostrando de _START_ até _END_ de _TOTAL_ registos",
+                    "infoEmpty": "Mostrando de 0 até 0 de 0 registos",
+                    "infoFiltered": "(filtrado de _MAX_ registos no total)",
+                    "loadingRecords": "A carregar...",
+                    "zeroRecords": "Nenhum registo encontrado",
+                    "emptyTable": "Não existem dados disponíveis nesta tabela",
+                    "paginate": {
+                        "first": "Primeiro",
+                        "previous": "Anterior",
+                        "next": "Seguinte",
+                        "last": "Último"
+                    },
+                    "aria": {
+                        "sortAscending": ": ordenar coluna de forma ascendente",
+                        "sortDescending": ": ordenar coluna de forma descendente"
+                    }
+                }
+            });
+
+            // Filtros: recarrega a página com query string
+            $('#filterEndpoint, #filterProcessed, #filterStartDate, #filterEndDate').on('change', function () {
+                var url = new URL(window.location.href);
+                var endpoint = $('#filterEndpoint').val();
+                var processed = $('#filterProcessed').val();
+                var startDate = $('#filterStartDate').val();
+                var endDate = $('#filterEndDate').val();
+
+                if(endpoint) url.searchParams.set('endpoint', endpoint); else url.searchParams.delete('endpoint');
+                if(processed) url.searchParams.set('processed', processed); else url.searchParams.delete('processed');
+                if(startDate) url.searchParams.set('startDate', startDate); else url.searchParams.delete('startDate');
+                if(endDate) url.searchParams.set('endDate', endDate); else url.searchParams.delete('endDate');
+
+                window.location.href = url.toString();
+            });
+        });
+
+        function forceReprocess(endpoint, sourceId) {
+            if (!confirm("Forçar reprocessamento?")) return;
+
+            fetch('/Reprocess/Request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sourceEndpoint: endpoint,
+                    sourceEndpointId: String(sourceId)
+                })
+            })
+            .then(async r => {
+                const data = await r.json();
+                if (!r.ok) throw data;
+                alert(data.message);
+                location.reload();
+            })
+            .catch(err => {
+                alert(err.message || "Erro ao submeter pedido");
+            });
+        }
+
+
+
+    </script>
+}
