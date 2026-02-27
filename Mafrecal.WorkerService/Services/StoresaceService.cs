@@ -45,112 +45,256 @@ namespace Mafrecal.WorkerService.Services
         /// <summary>
         /// Obtém todos os itens de um endpoint de forma paginada, retornando JSON bruto (string) para performance.
         /// </summary>
- public async Task<List<string>> GetEndpointSalesAsync(string endpoint, int pageSize = 50, CancellationToken cancellationToken = default)
+        //public async Task<List<string>> GetEndpointSalesAsync(string endpoint, int pageSize = 50, CancellationToken cancellationToken = default)
+        //       {
+        //           var allItems = new List<string>();
+        //           int page = 1;
+        //              // List<string> stores = await _sql.GetStores();
+
+        //            List<string> stores =new List<string>();
+        //           //stores.Add("11");
+        //           stores.Add("8");
+        //           //stores.Add("16");
+        //           //stores.Add("17");
+        //           //stores.Add("22");
+        //           //stores.Add("23");
+        //           //stores.Add("24");
+        //           //stores.Add("25");
+
+        //           var date = DateTime.Today.AddDays(-_defaultLookbackDays).ToString("yyyy-MM-dd");
+
+
+        //           int ano = 2026;
+        //           DateTime inicio = new DateTime(ano, 1, 1);
+        //           DateTime fim = new DateTime(ano, 2, 26);
+
+        //           for (DateTime dia = inicio; dia <= fim; dia = dia.AddDays(1))
+        //           {
+
+        //           foreach (var storeId in stores)
+        //           {
+
+        //                   Logger.Info($"Loja {storeId} dia {dia.ToString("yyyy-MM-dd")}");
+        //                   while (!cancellationToken.IsCancellationRequested)
+        //               {
+        //                   HttpResponseMessage response;
+        //                   string url = $"{_baseUrl}{endpoint}/?format=json&page_size={pageSize}&page={page}&date={dia.ToString("yyyy-MM-dd")}&store={storeId}";
+
+        //                   try
+        //                   {
+
+        //                       response = await _client.GetAsync(url, cancellationToken);
+        //                   }
+        //                   catch (TaskCanceledException)
+        //                   {
+        //                       Logger.Error($"Erro GetEndpointSalesAsync. Não foi possível processar o endereço {url}");
+
+        //                       AppLogger.Error(
+        //                           "Erro no endpoint",
+        //                           ex: $"Erro GetEndpointSalesAsync. Não foi possível processar o endereço {url}",
+        //                           endpoint: "GetEndpointSalesAsync"
+        //                       );
+        //                       continue;
+        //                   }
+        //                   catch (Exception ex)
+        //                   {
+        //                       Logger.Error($"Erro GetEndpointSalesAsync. Não foi possível processar o endereço {url}");
+
+        //                       AppLogger.Error(
+        //                           "Erro no endpoint",
+        //                           ex: $"Erro GetEndpointSalesAsync. Não foi possível processar o endereço.",
+        //                           endpoint: "GetEndpointSalesAsync"
+        //                       );
+
+        //                       continue;
+        //                   }
+
+        //                   // TRATAMENTO DO 403
+        //                   if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        //                   {
+        //                       //Logger.Error($"Endereço {url} provavelemente sem dados para o dia {date} e loja {storeId}");
+        //                       //AppLogger.Error(
+        //                       //    "Erro no endpoint",
+        //                       //    ex: $"Endereço {url} provavelemente sem dados para o dia {date} e loja {storeId}",
+        //                       //    endpoint: "GetEndpointSalesAsync"
+        //                       //);
+        //                       continue; // passa para a próxima store
+        //                   }
+
+        //                   // Outros erros HTTP
+        //                   if (!response.IsSuccessStatusCode)
+        //                   {
+        //                       Logger.Error($"Endereço {url} com erro desconhecido.");
+        //                       AppLogger.Error(
+        //                           "Erro no endpoint",
+        //                           ex: $"Endereço {url} com erro desconhecido.",
+        //                           endpoint: "GetEndpointSalesAsync"
+        //                       );
+        //                       continue;
+        //                   }
+
+        //                   await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        //                   using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+        //                   var items = doc.RootElement.GetProperty("results").EnumerateArray();
+
+        //                   int count = 0;
+        //                   foreach (var item in items)
+        //                   {
+        //                       allItems.Add(item.GetRawText()); // Armazena JSON bruto
+        //                       count++;
+        //                   }
+
+        //                   if (count < pageSize)
+        //                       break; // última página
+        //                   page++;
+        //               }
+        //           }
+        //         }
+
+        //           return allItems;
+        //       }
+
+        public async Task<List<string>> GetEndpointSalesAsync(
+    string endpoint,
+    int pageSize = 50,
+    CancellationToken cancellationToken = default)
         {
             var allItems = new List<string>();
-            int page = 1;
-            //     List<string> stores = await _sql.GetStores();
 
-            List<string> stores =new List<string>();
-            //stores.Add("8");
-            //stores.Add("22");
-            stores.Add("24");
-            var date = DateTime.Today.AddDays(-_defaultLookbackDays).ToString("yyyy-MM-dd");
-
-
-            int ano = 2025;
-            DateTime inicio = new DateTime(ano, 12, 1);
-            DateTime fim = new DateTime(ano, 12, 31);
-
-            for (DateTime dia = inicio; dia <= fim; dia = dia.AddDays(1))
-            {
-        
-     
-            foreach (var storeId in stores)
-            {
-
-               while (!cancellationToken.IsCancellationRequested)
+            List<string> stores = new List<string>
                 {
-                    HttpResponseMessage response;
-                    string url = $"{_baseUrl}{endpoint}/?format=json&page_size={pageSize}&page={page}&date={dia.ToString("yyyy-MM-dd")}&store={storeId}";
+                    "8","16","17","22","23","24","25"
+                };
 
-                    try
+
+
+           var date = DateTime.Today.AddDays(-_defaultLookbackDays).ToString("yyyy-MM-dd");
+
+            //int ano = 2026;
+            //DateTime inicio = new DateTime(ano, 1, 1);
+            //DateTime fim = new DateTime(ano, 2, 27);
+
+            const int maxRetries = 3;
+            const int delayMilliseconds = 2000;
+
+            //for (DateTime dia = inicio; dia <= fim; dia = dia.AddDays(1))
+            //{
+                foreach (var storeId in stores)
+                {
+                  //  Logger.Info($"Loja {storeId} dia {date}");
+
+                    int page = 1;  
+
+                    while (!cancellationToken.IsCancellationRequested)
                     {
-                    
-                        response = await _client.GetAsync(url, cancellationToken);
+                        int retryCount = 0;
+                        HttpResponseMessage response = null;
+                        string url =
+                            $"{_baseUrl}{endpoint}/?format=json&page_size={pageSize}&page={page}&date={date}&store={storeId}";
+
+                        // ===============================
+                        // Retry controlado
+                        // ===============================
+                        while (retryCount < maxRetries)
+                        {
+                            try
+                            {
+                                response = await _client.GetAsync(url, cancellationToken);
+                                break; // sucesso na chamada
+                            }
+                            catch (TaskCanceledException ex)
+                            {
+                                retryCount++;
+                                Logger.Error($"Timeout ao chamar {url}");
+                                AppLogger.Error(
+                                    "Erro no endpoint",
+                                    ex: ex.Message,
+                                    endpoint: "GetEndpointSalesAsync"
+                                );
+
+                                if (retryCount >= maxRetries)
+                                    break;
+
+                                await Task.Delay(delayMilliseconds, cancellationToken);
+                            }
+                            catch (Exception ex)
+                            {
+                                retryCount++;
+                                Logger.Error($"Erro ao chamar {url}");
+                                AppLogger.Error(
+                                    "Erro no endpoint",
+                                    ex: ex.Message,
+                                    endpoint: "GetEndpointSalesAsync"
+                                );
+
+                                if (retryCount >= maxRetries)
+                                    break;
+
+                                await Task.Delay(delayMilliseconds, cancellationToken);
+                            }
+                        }
+
+                        // Se falhou todas as tentativas → sai da paginação
+                        if (response == null)
+                            break;
+
+                        // ===============================
+                        // Tratamento HTTP
+                        // ===============================
+
+                        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                        {
+                            // Sem dados para esta store/dia
+                            break; // sai da paginação
+                        }
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            Logger.Error($"Endereço {url} com erro {response.StatusCode}");
+                            AppLogger.Error(
+                                "Erro no endpoint",
+                                ex: $"StatusCode: {response.StatusCode}",
+                                endpoint: "GetEndpointSalesAsync"
+                            );
+
+                            break; // evita loop infinito
+                        }
+
+                        // ===============================
+                        // Processamento da resposta
+                        // ===============================
+
+                        await using var stream =
+                            await response.Content.ReadAsStreamAsync(cancellationToken);
+
+                        using var doc =
+                            await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+                        var items = doc.RootElement
+                                       .GetProperty("results")
+                                       .EnumerateArray();
+
+                        int count = 0;
+
+                        foreach (var item in items)
+                        {
+                            allItems.Add(item.GetRawText());
+                            count++;
+                        }
+
+                        if (count < pageSize)
+                            break; // última página
+
+                        page++; // próxima página
                     }
-                    catch (TaskCanceledException)
-                    {
-                        Logger.Error($"Erro GetEndpointSalesAsync. Não foi possível processar o endereço {url}");
-    
-                        AppLogger.Error(
-                            "Erro no endpoint",
-                            ex: $"Erro GetEndpointSalesAsync. Não foi possível processar o endereço {url}",
-                            endpoint: "GetEndpointSalesAsync"
-                        );
-                        continue;
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error($"Erro GetEndpointSalesAsync. Não foi possível processar o endereço {url}");
-
-                        AppLogger.Error(
-                            "Erro no endpoint",
-                            ex: $"Erro GetEndpointSalesAsync. Não foi possível processar o endereço.",
-                            endpoint: "GetEndpointSalesAsync"
-                        );
-
-                        continue;
-                    }
-
-                    // TRATAMENTO DO 403
-                    if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
-                    {
-                        //Logger.Error($"Endereço {url} provavelemente sem dados para o dia {date} e loja {storeId}");
-                        //AppLogger.Error(
-                        //    "Erro no endpoint",
-                        //    ex: $"Endereço {url} provavelemente sem dados para o dia {date} e loja {storeId}",
-                        //    endpoint: "GetEndpointSalesAsync"
-                        //);
-                        continue; // passa para a próxima store
-                    }
-
-                    // Outros erros HTTP
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        Logger.Error($"Endereço {url} com erro desconhecido.");
-                        AppLogger.Error(
-                            "Erro no endpoint",
-                            ex: $"Endereço {url} com erro desconhecido.",
-                            endpoint: "GetEndpointSalesAsync"
-                        );
-                        continue;
-                    }
-
-                    await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                    using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-                    var items = doc.RootElement.GetProperty("results").EnumerateArray();
-
-                    int count = 0;
-                    foreach (var item in items)
-                    {
-                        allItems.Add(item.GetRawText()); // Armazena JSON bruto
-                        count++;
-                    }
-
-                    if (count < pageSize)
-                        break; // última página
-                    page++;
                 }
-            }
-            }
+            //}
 
             return allItems;
         }
 
-
-   public async Task<List<string>> GetEndpointPurchasesAsync(
+        public async Task<List<string>> GetEndpointPurchasesAsync(
     string endpoint,
     int pageSize = 50,
     CancellationToken cancellationToken = default)

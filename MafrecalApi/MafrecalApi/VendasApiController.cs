@@ -1,11 +1,14 @@
 ﻿using BasBE100;
+using CblBE100;
 using CmpBE100;
 using ErpBS100;
 using MafrecalApiV10.Models;
 using NLog;
 using Primavera.WebAPI.Integration;
+using StdBE100;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -139,9 +142,9 @@ namespace MafrecalApiV10.MafrecalApi
                         linha.Desconto1);
 
                     var linhaDoc = docVenda.Linhas.Cast<VndBELinhaDocumentoVenda>().Last();
-                    linhaDoc.Desconto1 = linha.Desconto1;
-                    linhaDoc.Desconto2 = linha.Desconto2;
-                    linhaDoc.Desconto3 = linha.Desconto3;
+                    //linhaDoc.Desconto1 = linha.Desconto1;
+                    //linhaDoc.Desconto2 = linha.Desconto2;
+                    //linhaDoc.Desconto3 = linha.Desconto3;
                     linhaDoc.PercIvaDedutivel = 100;
                     linhaDoc.PercIncidenciaIVA = 100;
                     linhaDoc.CodIva = Helper.DaCodIva(linha.Iva);
@@ -206,15 +209,21 @@ namespace MafrecalApiV10.MafrecalApi
                 ProductContext.MotorLE.Vendas.Documentos.Actualiza(docVenda);
 
                 resultado = NovoDocumentoCaixa(docVenda, documento.ResumoTipoPag, documento.DocumentoFecho, natureza);
-
                 if (!resultado.sucesso)
                 {
 
                     return BadRequest(resultado.mensagem);
                 }
 
-                return Ok();
 
+                resultado = IntegraMovimentoContabilidade(docVenda);
+
+                if (!resultado.sucesso)
+                {
+                    return BadRequest(resultado.mensagem);
+                }
+
+                return Ok();
 
             }
             catch (Exception ex)
@@ -468,6 +477,471 @@ namespace MafrecalApiV10.MafrecalApi
             }
 
         }
+
+
+        public static (bool sucesso, string mensagem) IntegraMovimentoContabilidade(VndBEDocumentoVenda DocumentoOrigem )
+        {
+ 
+            if (DocumentoOrigem.TotalDocumento == 0 || DocumentoOrigem.CBLEstado == 1)
+                return (true, "Documento sem movimento ou já integrado.");
+
+            string aviso = string.Empty;
+
+            //if (!ProductContext.MotorLE.Base.LigacaoCBL.BDDocLigaCBL("V", DocumentoOrigem.Tipodoc))
+            //    return (false, $"O tipo de documento {DocumentoOrigem.Tipodoc} não está configurado para integrar na contabilidade.");
+
+
+            if (!ProductContext.MotorLE.Base.LigacaoCBL.IntegraDocumentoLogCBL("V",
+                                                  DocumentoOrigem.Tipodoc,
+                                                  DocumentoOrigem.Serie,
+                                                  DocumentoOrigem.NumDoc,
+                                                  DocumentoOrigem.Filial,
+                                                  -1,
+                                                  ref aviso,
+                                                  true))
+            {
+            
+                return (false, $"Não vou possível integrar o documento {DocumentoOrigem.Tipodoc} {DocumentoOrigem.Serie}/{DocumentoOrigem.NumDoc} na contabilidade. ");
+            }
+
+
+            //var resultado =  CorrigeMovimentoContabilidade(DocumentoOrigem);
+            //if (!resultado.sucesso)
+            //{
+            //  return (false, resultado.mensagem);
+            //}
+
+            return (true, "Documento sem movimento ou já integrado.");
+
+        }
+
+ 
+        public static (bool sucesso, string mensagem) CorrigeMovimentoContabilidade(VndBEDocumentoVenda DocumentoOrigem)
+        {
+            CblBEDocumento DocumentoCBL = null;
+
+            try
+            {
+ 
+            DocumentoCBL = new CblBEDocumento();
+            DocumentoCBL = (CblBEDocumento)ProductContext.MotorLE.Base.LigacaoCBL.DescodificaDocumentoLog("V",
+                                                                              DocumentoOrigem.Tipodoc,
+                                                                              DocumentoOrigem.Serie,
+                                                                              DocumentoOrigem.NumDoc,
+                                                                              DocumentoOrigem.Filial,
+                                                                                          -1);
+
+             string contaBase = "7111112";
+
+             decimal debito = DocumentoCBL.LinhasGeral
+            .Where(l => l.Natureza == "D")
+            .Sum(l => l.Valor);
+
+            decimal credito = DocumentoCBL.LinhasGeral
+                .Where(l => l.Natureza == "C")
+                .Sum(l => l.Valor);
+
+            decimal balance = 0;
+            balance = credito - debito;
+
+             Logger.Warn($"Balance: {balance}");
+
+         if (balance == 0)
+                return (true, "");
+
+            CblBELinhaDocGeral Linha = DocumentoCBL.LinhasGeral.FirstOrDefault(l => l.Conta == contaBase);
+
+            if (Linha == null)
+                return (false, $"Conta {contaBase} não encontrada.");
+
+            decimal valorFinal = Linha.Valor - balance;
+            string avisos = string.Empty;
+
+            DocumentoCBL.LinhasGeral.GetEditaID(Linha.ID).Valor = valorFinal;
+            DocumentoCBL.LinhasGeral.GetEditaID(Linha.ID).ValorAlt = valorFinal;
+            DocumentoCBL.LinhasGeral.GetEditaID(Linha.ID).ValorOrigem = valorFinal;
+             DocumentoCBL.Rascunho = false;
+
+
+           VndBEDocumentoVenda DocumentoVenda;
+
+            if (ProductContext.MotorLE.Base.LigacaoCBL.IntegraDocumentoCBL(DocumentoCBL, "000", ref avisos))
+            {
+                DocumentoVenda = ProductContext.MotorLE.Vendas.Documentos.EditaID(DocumentoOrigem.ID);
+                DocumentoVenda.CBLEstado = 1;
+                DocumentoVenda.CBLDiario = DocumentoCBL.Diario;
+                DocumentoVenda.CBLNumDiario = DocumentoCBL.NumDiario;
+                DocumentoVenda.IDCabecMovCbl = DocumentoCBL.ID;
+                DocumentoVenda.CBLAno = DocumentoCBL.Ano;
+
+                ProductContext.MotorLE.Vendas.Documentos.Actualiza(DocumentoVenda);
+
+                if (avisos.Length > 0)
+                    return (true, avisos);
+            }
+ 
+            return (true, "Documento sem movimento ou já integrado.");
+
+            }
+            catch (Exception ex)
+            {
+
+                return (false, ex.Message);
+            }
+
+        }
+
+
+        //private static bool CorrigeMovimentoContabilidade2(ErpBS MotorPrimavera,
+        //                                      VndBEDocumentoVenda Documento)
+        //{
+        //    string diario = string.Empty;
+        //    string tipoLancamento = string.Empty;
+        //    string natureza = string.Empty;
+        //    CblBELinhaDocGeral Linha = null;
+        //    CblBELinhaDocCentros LinhaCC = null;
+        //    CblBEDocumento DocumentoCBL = null;
+        //    VndBEDocumentoVenda DocumentoComercial = null;
+
+
+        //    try
+        //    {
+        //        string documento = Documento.Tipodoc + " Nº " + Documento.NumDoc + "/" + Documento.Serie;
+        //        #region CBL
+        //        DocumentoCBL = new CblBEDocumento();
+        //        DocumentoCBL = (CblBEDocumento)MotorPrimavera.Base.LigacaoCBL.DescodificaDocumentoLog("V",
+        //                                                                          Documento.Tipodoc,
+        //                                                                          Documento.Serie,
+        //                                                                          Documento.NumDoc,
+        //                                                                          Documento.Filial,
+        //                                                                                      -1);
+
+
+
+
+
+
+
+
+        //        decimal credit = 0;
+        //        decimal debit = 0;
+        //        decimal balance = 0;
+        //        decimal total = 0;
+        //        string localOperacao = string.Empty;
+        //        string contaBaseDebito = "68888";
+        //        string analiticaDebito = "916888801";
+        //        string analiticaInversaDebito = "918116";
+        //        string contaBaseCredito = "7888";
+        //        string analiticaCredito = "91788801";
+        //        string analiticaInversaCredito = "918117";
+        //        int lote = 0;
+        //        bool isBalancePositive = false;
+
+
+        //        foreach (CblBELinhaDocGeral linha in DocumentoCBL.LinhasGeral)
+        //        {
+        //            if (linha.Natureza == "D")
+        //            {
+        //                debit += linha.Valor;
+        //            }
+        //            if (linha.Natureza == "C")
+        //            {
+        //                credit += linha.Valor;
+        //            }
+        //            if (lote != linha.Lote)
+        //            {
+        //                lote = linha.Lote + 1;
+        //            }
+        //        }
+
+        //        foreach (CblBELinhaDocGeral LinhasContabilidade in DocumentoCBL.LinhasGeral)
+        //        {
+        //            if (LinhasContabilidade.TipoEntidade == "C")
+        //            {
+        //                localOperacao = LinhasContabilidade.LocalOperacao;
+        //                break;
+        //            }
+
+        //        }
+        //        // 7121 e da 7111 para as faturas e da 71711 e 71722
+        //        //CblBELinhaDocGeral LinhaContabilidade;
+        //        //foreach (CblBELinhaDocGeral LinhasContabilidade in DocumentoCBL.LinhasGeral)
+        //        //{
+        //        //    if (LinhasContabilidade.get_Conta() == "71721")
+        //        //    {
+        //        //        LinhaContabilidade = LinhasContabilidade;
+        //        //        //IdLinha = LinhasContabilidade.get_ID();
+        //        //        break;
+        //        //    }
+        //        //}
+        //        CblBELinhaDocCentros LinhaCentros = new CblBELinhaDocCentros();
+        //        foreach (CblBELinhaDocCentros LinhasCentros in DocumentoCBL.LinhasCentros)
+        //        {
+        //            if (Documento.Tipodoc == "FT" || Documento.Tipodoc == "FS")
+        //            {
+        //                if ((LinhasCentros.ContaOrigem == "7111"
+        //                    || LinhasCentros.ContaOrigem == "7112"
+        //                    || LinhasCentros.ContaOrigem == "7113"
+        //                    || LinhasCentros.ContaOrigem == "7121"
+        //                    || LinhasCentros.ContaOrigem == "7122"
+        //                    || LinhasCentros.ContaOrigem == "7123"
+        //                    ) && LinhasCentros.TipoLinha == "O")
+        //                {
+        //                    LinhaCentros = LinhasCentros;
+        //                    //IdLinha = LinhasContabilidade.get_ID();
+        //                    break;
+        //                }
+        //            }
+        //            if (Documento.Tipodoc == "NC")
+        //            {
+        //                if ((LinhasCentros.ContaOrigem == "71711"
+        //                    || LinhasCentros.ContaOrigem == "71712"
+        //                    || LinhasCentros.ContaOrigem == "71713"
+        //                    || LinhasCentros.ContaOrigem == "71721"
+        //                    || LinhasCentros.ContaOrigem == "71722"
+        //                    || LinhasCentros.ContaOrigem == "71723") && LinhasCentros.TipoLinha == "O")
+        //                {
+        //                    LinhaCentros = LinhasCentros;
+        //                    //IdLinha = LinhasContabilidade.get_ID();
+        //                    break;
+        //                }
+        //            }
+        //        }
+        //        //if (string.IsNullOrEmpty(IdLinha))
+        //        //{
+        //        //    Logger.Warn("{0} - A linha da entidade não foi encontrada para o documento {1}", MethodBase.GetCurrentMethod().Name, Documento.get_Tipodoc() + Documento.get_Serie() + Documento.get_NumDoc());
+        //        //    return false;
+        //        //}
+        //        //Linha = DocumentoCBL.LinhasGeral.EditaID[IdLinha];
+        //        balance = credit - debit;
+
+        //        if (balance >= 0)
+        //        {
+        //            isBalancePositive = true;
+        //            natureza = "D";
+        //        }
+        //        else
+        //        {
+        //            natureza = "C";
+        //        }
+
+        //        switch (Documento.Tipodoc)
+        //        {
+        //            case "FT":
+        //                //     natureza = "D";
+        //                //   total = Linha.get_Valor() + balance;
+        //                break;
+        //            case "FS":
+        //                //     natureza = "D";
+        //                //  total = Linha.get_Valor() + balance;
+        //                break;
+        //            case "NC":
+        //                //     natureza = "C";
+        //                // total = Linha.get_Valor() - balance;
+        //                break;
+        //        }
+
+        //        if (balance != 0)
+        //        {
+        //            balance = System.Math.Abs(balance);
+        //            //Linha.set_Valor(total);
+        //            //Linha.set_ValorAlt(total);
+        //            //Linha.set_ValorOrigem(total);
+        //            //Linha.set_ValorIncIVA(total);
+        //            //Linha.set_ValorIncIVAAlt(total);
+        //            //Linha.set_ValorIncIVAOrigem(total);
+        //            Linha = new CblBELinhaDocGeral();
+        //            Linha.TipoLinha = ("F");
+        //            Linha.Lote = (Convert.ToInt16(lote));
+        //            Linha.TipoOperacao = (0);
+        //            Linha.LocalOperacao = (localOperacao);
+
+        //            if (isBalancePositive)
+        //            {
+        //                Linha.Conta = (contaBaseDebito);
+        //            }
+        //            else
+        //            {
+        //                Linha.Conta = (contaBaseCredito);
+        //            }
+
+
+        //            Linha.Natureza = (natureza);
+        //            Linha.Moeda = (DocumentoCBL.Moeda);
+        //            //  Linha.set_TipoEntidade("F");
+        //            //Linha.set_Entidade("F");
+        //            Linha.Valor = (Convert.ToDecimal(balance));
+        //            Linha.ValorAlt = (Convert.ToDecimal(balance));
+        //            Linha.ValorOrigem = (Convert.ToDecimal(balance));
+        //            Linha.ValorIncIVA = (balance);
+        //            Linha.ValorIncIVAAlt = (balance);
+        //            Linha.ValorIncIVAOrigem = (balance);
+        //            Linha.Cambio = (1);
+        //            Linha.CambioMAlt = (1);
+        //            Linha.CambioOrigem = (1);
+        //            Linha.Descricao = (documento);
+        //            //   Linha.set_ReflexaoAnalitica(true);
+        //            DocumentoCBL.LinhasGeral.Insere(Linha);
+        //            ///
+        //            Linha = new CblBELinhaDocGeral();
+        //            Linha.TipoLinha = ("A");
+        //            Linha.Lote = (Convert.ToInt16(lote));
+        //            // Linha.set_LocalOperacao(localOperacao);
+        //            Linha.TipoOperacao = (0);
+        //            if (isBalancePositive)
+        //            {
+        //                Linha.Conta = (analiticaDebito);
+        //                Linha.ContaOrigem = (contaBaseDebito);
+        //            }
+        //            else
+        //            {
+        //                Linha.Conta = (analiticaCredito);
+        //                Linha.ContaOrigem = (contaBaseCredito);
+        //            }
+        //            Linha.Natureza = (natureza);
+        //            Linha.Moeda = (DocumentoCBL.Moeda);
+        //            //  Liset_TipoEntidade("F");
+        //            //Linht_Entidade("F");
+        //            Linha.Valor = (Convert.ToDecimal(balance));
+        //            Linha.ValorAlt = (Convert.ToDecimal(balance));
+        //            Linha.ValorOrigem = (Convert.ToDecimal(balance));
+        //            Linha.ValorIncIVA = (balance);
+        //            Linha.ValorIncIVAAlt = (balance);
+        //            Linha.ValorIncIVAOrigem = (balance);
+        //            Linha.Cambio = (1);
+        //            Linha.CambioMAlt = (1);
+        //            Linha.CambioOrigem = (1);
+        //            Linha.Descricao = (documento);
+        //            Linha.ReflexaoAnalitica = (true);
+        //            DocumentoCBL.LinhasGeral.Insere(Linha);
+        //            ////
+        //            Linha = new CblBELinhaDocGeral();
+        //            Linha.Lote = (Convert.ToInt16(lote));
+        //            Linha.TipoLinha = ("A");
+        //            //    ha.set_LocalOperacao(localOperacao);
+        //            Linha.TipoOperacao = (0);
+        //            if (isBalancePositive)
+        //            {
+        //                Linha.Conta = (analiticaInversaDebito);
+        //                Linha.ContaOrigem = (contaBaseDebito);
+        //            }
+        //            else
+        //            {
+        //                Linha.Conta = (analiticaInversaCredito);
+        //                Linha.ContaOrigem = (contaBaseCredito);
+        //            }
+        //            Linha.Natureza = (natureza == "D" ? "C" : "D");
+        //            Linha.Moeda = (DocumentoCBL.Moeda);
+        //            //  Liset_TipoEntidade("F");
+        //            //Linht_Entidade("F");
+        //            Linha.Valor = (Convert.ToDecimal(balance));
+        //            Linha.ValorAlt = (Convert.ToDecimal(balance));
+        //            Linha.ValorOrigem = (Convert.ToDecimal(balance));
+        //            Linha.ValorIncIVA = (balance);
+        //            Linha.ValorIncIVAAlt = (balance);
+        //            Linha.ValorIncIVAOrigem = (balance);
+        //            Linha.Cambio = (1);
+        //            Linha.CambioMAlt = (1);
+        //            Linha.CambioOrigem = (1);
+        //            Linha.Descricao = (documento);
+        //            Linha.ReflexaoAnalitica = (true);
+        //            DocumentoCBL.LinhasGeral.Insere(Linha);
+        //            ///
+        //            LinhaCC = new CblBELinhaDocCentros();
+        //            LinhaCC.Lote = Convert.ToInt16(lote);
+        //            LinhaCC.TipoLinha = ("O");
+        //            LinhaCC.Centro = (LinhaCentros.Centro);
+        //            if (isBalancePositive)
+        //            {
+        //                LinhaCC.ContaOrigem = (contaBaseDebito);
+        //            }
+        //            else
+        //            {
+        //                LinhaCC.ContaOrigem = (contaBaseCredito);
+        //            }
+        //            LinhaCC.Percentagem = (100);
+        //            //    Linha.set_Linha("F");
+        //            LinhaCC.Natureza = (natureza);
+        //            LinhaCC.Moeda = (DocumentoCBL.Moeda);
+        //            //  Linht_TipoEntidade("F");
+        //            //Linha.Entidade("F");
+        //            LinhaCC.Valor = (Convert.ToDecimal(balance));
+        //            LinhaCC.ValorAlt = (Convert.ToDecimal(balance));
+        //            LinhaCC.ValorOrigem = (Convert.ToDecimal(balance));
+        //            LinhaCC.Cambio = (1);
+        //            LinhaCC.CambioMAlt = (1);
+        //            LinhaCC.CambioOrigem = (1);
+        //            LinhaCC.Descricao = (documento);
+
+        //            DocumentoCBL.LinhasCentros.Insere(LinhaCC);
+        //            DocumentoCBL.Rascunho = false;
+
+        //        }
+        //        // CblBELinhasDocCentros linhasCentros = DocumentoCBL.LinhasCentros;
+        //        //  DocumentoCBL.LinhasCentros.RemoveTodos();
+        //        //foreach (CblBELinhaDocCentros linhasCentro in linhasCentros)
+        //        //{
+        //        //    CblBELinhaDocCentros beLinhaDocCentros = linhasCentro;
+        //        //    ref CblBELinhaDocCentros local = ref beLinhaDocCentros;
+        //        //    DocumentoCBL.LinhasCentros.Insere(ref local);
+        //        //}
+        //        //                MotorPrimavera.Contabilidade.Documentos.BalanceiaDiferencasArredondamento(DocumentoCBL);
+        //        string avisos = "";
+
+        //        if (MotorPrimavera.Base.LigacaoCBL.IntegraDocumentoCBL(DocumentoCBL, "000", ref avisos))
+        //        {
+        //            Logger.Warn("{0} - Documento corrigido na CBL {1}", MethodBase.GetCurrentMethod().Name, Documento.Tipodoc
+        //                + Documento.Serie
+        //                + Documento.NumDoc);
+        //            DocumentoComercial = MotorPrimavera.Vendas.Documentos.EditaID(Documento.ID);
+        //            DocumentoComercial.CBLEstado = 1;
+        //            DocumentoComercial.CBLDiario = DocumentoCBL.Diario;
+        //            DocumentoComercial.CBLNumDiario = DocumentoCBL.NumDiario;
+        //            DocumentoComercial.IDCabecMovCbl = DocumentoCBL.ID;
+        //            DocumentoComercial.CBLAno = DocumentoCBL.Ano;
+        //            MotorPrimavera.Vendas.Documentos.Actualiza(DocumentoComercial);
+
+        //            if (avisos.Length > 0)
+        //            {
+        //                Logger.Warn("{0} - Erro no documento {1}", MethodBase.GetCurrentMethod().Name, Documento.Tipodoc
+        //                    + Documento.Serie
+        //                    + Documento.NumDoc);
+        //                return false;
+        //            }
+        //        }
+        //        #endregion
+        //        return true;
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Logger.Error("{0} - Erro no documento {1} ", MethodBase.GetCurrentMethod().Name, Documento.Tipodoc
+        //                    + Documento.Serie
+        //                    + Documento.NumDoc
+        //        + "\n" +
+        //         e.ToString());
+        //        throw new Exception(e.Message);
+        //        return false;
+        //    }
+        //    finally
+        //    {
+
+        //        Helper.ReleaseCom(DocumentoComercial);
+        //        Helper.ReleaseCom(Linha);
+        //        Helper.ReleaseCom(LinhaCC);
+        //        Helper.ReleaseCom(DocumentoCBL);
+
+        //        DocumentoCBL = null;
+        //        Linha = null;
+        //        LinhaCC = null;
+        //        DocumentoComercial = null;
+
+        //        GC.Collect();
+        //        GC.WaitForPendingFinalizers();
+        //    }
+        //}
+
+
+
 
     }
 }

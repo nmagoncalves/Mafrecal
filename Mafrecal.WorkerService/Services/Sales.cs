@@ -33,7 +33,11 @@ namespace Mafrecal.WorkerService.Services
  
             dynamic transDocument = tx.GetProperty("TransDocument").GetString();
 
-     
+            //if (mainSourceId!= "24.20251202.FT.133694798")
+            //{
+            //    return;
+            //}
+ 
                 //if (transDocument =="FT"  || transDocument == "NC")
                 //{
                 //AppLogger.Error($"Tipo documento ignorado {transDocument} {mainSourceId}",
@@ -43,9 +47,7 @@ namespace Mafrecal.WorkerService.Services
                 //    ex: "O mapeamento do documento de integração não foi encontrado");
                 //return;
                 //}
-
-          
-
+ 
             #region CLIENTE
 
             if (!await PreProcessCustomer(tx, primavera, sql, storesace, cancellationToken))

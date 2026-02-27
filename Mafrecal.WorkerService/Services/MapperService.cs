@@ -328,30 +328,49 @@ namespace Mafrecal.WorkerService.Services
             var acumuladoIva = new Dictionary<int, dynamic>();
            var totalTenderLines = new Dictionary<string, dynamic>();
 
+            double precoLiquido = 0;
+            double valorIVA = 0;
+
             foreach (var item in tx.GetProperty("SaleTransactionDetails").EnumerateArray())
             {
-                linhas.Add(new
+
+                var totalLiquido = Helpers.General.AdjustIfEndsWith5At3Decimals(GetDouble(item, "TotalNetBaseTaxAmount"));
+                var totalIva = Helpers.General.AdjustIfEndsWith5At3Decimals(GetDouble(item, "TotalTaxAmount"));
+
+
+                if (totalLiquido.Adjusted && totalIva.Adjusted)
                 {
+                    precoLiquido = totalLiquido.NewValue;
+                    valorIVA = GetDouble(item, "TotalTaxAmount") + 0.005;
+                }
+                else
+                {
+                    precoLiquido = GetDouble(item, "TotalNetBaseTaxAmount");
+                    valorIVA = GetDouble(item, "TotalTaxAmount");
+                }
 
-                    Artigo = GetString(item, "ItemId"),
-                    Marca = "",
-                    Armazem = "",
-                    Familia = "",
-                    Descricao = GetString(item, "ItemId"),
-                    Quantidade = GetDouble(item, "Quantity"),
-                    PrecUnit = GetDouble(item, "TotalAmount"),
-                    Iva = Convert.ToString(GetDouble(item, "TaxRate")),
-                    TaxaIva = GetDouble(item, "TaxPercentage"),
-                    Desconto1 = 0,
-                    Desconto2 = 0.00,
-                    Desconto3 = 0.00,
-                    ValorIVA = GetDouble(item, "TotalTaxAmount"),
-                    PrecoLiquido = GetDouble(item, "TotalNetBaseTaxAmount"),
-                    TotalLiquido = GetDouble(item, "TotalNetAmount"),
-                    TotalILiquido = GetDouble(item, "TotalAmount"),
-                    TotalDescontoValor = GetDouble(item, "TotalLineItemDiscountAmount")
+                    linhas.Add(new
+                    {
 
-                });
+                        Artigo = GetString(item, "ItemId"),
+                        Marca = "",
+                        Armazem = "",
+                        Familia = "",
+                        Descricao = GetString(item, "ItemId"),
+                        Quantidade = GetDouble(item, "Quantity"),
+                        PrecUnit = GetDouble(item, "TotalAmount"),
+                        Iva = Convert.ToString(GetDouble(item, "TaxRate")),
+                        TaxaIva = GetDouble(item, "TaxPercentage"),
+                        Desconto1 = 0,
+                        Desconto2 = 0.00,
+                        Desconto3 = 0.00,
+                        ValorIVA = valorIVA, // somar o valor do IVA para ficar com o valor total do IVA - GetDouble(item, "TotalTaxAmount"),
+                        PrecoLiquido = precoLiquido, // diminuir o valor do IVA para ficar com o preço líquido - GetDouble(item, "TotalNetBaseTaxAmount")
+                        TotalLiquido = GetDouble(item, "TotalNetAmount"),
+                        TotalILiquido = GetDouble(item, "TotalAmount"),
+                        TotalDescontoValor = GetDouble(item, "TotalLineItemDiscountAmount")
+
+                    });
 
                 var codIva = GetInt(item, "TaxRate");
   
@@ -361,8 +380,8 @@ namespace Mafrecal.WorkerService.Services
                         {
                             CodIva = codIva,
                             TaxaIVA = GetDouble(item, "TaxPercentage"),
-                            Incidencia = GetDouble(item, "TotalNetBaseTaxAmount"),
-                            Valor = GetDouble(item, "TotalTaxAmount")
+                            Incidencia = precoLiquido,// GetDouble(item, "TotalNetBaseTaxAmount"),
+                            Valor = valorIVA//GetDouble(item, "TotalTaxAmount")
                         };
                     }
                     else
@@ -373,9 +392,9 @@ namespace Mafrecal.WorkerService.Services
                         {
                             CodIva = atual.CodIva,
                             TaxaIVA = atual.TaxaIVA,
-                            Incidencia = atual.Incidencia + GetDouble(item, "TotalNetBaseTaxAmount"),
-                            Valor = atual.Valor + GetDouble(item, "TotalTaxAmount")
-                        };
+                            Incidencia = atual.Incidencia + precoLiquido,// GetDouble(item, "TotalNetBaseTaxAmount"),
+                            Valor = atual.Valor + valorIVA //GetDouble(item, "TotalTaxAmount")
+                         };
                     }
  
  

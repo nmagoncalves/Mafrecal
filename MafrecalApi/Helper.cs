@@ -293,8 +293,14 @@ namespace MafrecalApiV10
                         $"WHERE Tabela ={tabela} AND Ano = {ano} AND Plano = '001' AND Entidade = '{codigo}'"
                     );
 
+                Logger.Info($"{lista.Vazia()}");
+
                 if (!lista.Vazia())
+                {
+                    Logger.Info($"LIGAÇÃO JÁ EXISTE {tabela} {ano} {codigo}");
                     return true;
+                }
+                
                
 
                 //if (lista.NumLinhas() > 0)
@@ -314,7 +320,7 @@ namespace MafrecalApiV10
 
                 var resultado = ProductContext.MotorLE.DSO.ExecuteSQL(sqlInsert);
 
-                Logger.Warn($"LIGAÇÃO CBL CRIADA {codigo}");
+                Logger.Info($"LIGAÇÃO CBL CRIADA {codigo}");
 
                 NovaContaCBL(conta, tipoEndidade, nomeEntidade, ano);
 
@@ -341,8 +347,13 @@ namespace MafrecalApiV10
                 }
                 string contaComposta = $"{contaBase}{codigo}";
 
+                Logger.Info($"CONTA COMPOSTA {contaComposta}");
                 if (ProductContext.MotorLE.Contabilidade.PlanoContas.Existe(ano, contaComposta))
+                {
+                    Logger.Info($"existe {contaComposta}");
                     return true;
+                }
+                  
 
                 CblBEConta NovaConta = new CblBEConta();
 
@@ -355,7 +366,9 @@ namespace MafrecalApiV10
 
                 ProductContext.MotorLE.Contabilidade.PlanoContas.Actualiza(NovaConta, ref avisos);
 
-                Logger.Warn($"CONTA CBL CRIADA {codigo}");
+        
+
+                Logger.Info($"CONTA CBL CRIADA {codigo}");
 
                 return true;
             }
@@ -611,7 +624,7 @@ namespace MafrecalApiV10
 
                 ProductContext.MotorLE.Base.Clientes.Actualiza(cliente);
 
-                Helper.NovaLigacaoCBL(cliente.Cliente, cliente.Nome, 2025, 1, "C");
+                Helper.NovaLigacaoCBL(cliente.Cliente, cliente.Nome, 2026, 1, "C");
  
                 return (true,"");
             }
